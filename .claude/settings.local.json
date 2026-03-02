@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(analyze)",
+      "WebSearch",
+      "Bash(claude usage)",
+      "Bash(CLAUDECODE= claude usage)",
+      "Bash(echo:*)",
+      "Bash(chmod:*)",
+      "Bash(crontab:*)",
+      "Bash(/bin/bash:*)",
+      "Bash(claude:*)",
+      "Bash(launchctl:*)"
+    ]
+  }
+}
