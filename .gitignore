@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/settings.local.json
+
+# Project data
+data/usage_log.jsonl
+data/cron.log
+
+# Misc
+*.log
+*.tmp
+*.bak
