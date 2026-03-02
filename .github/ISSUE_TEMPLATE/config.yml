@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Watchlist 직접 편집
+    url: https://github.com/gun025bba/fidelity/edit/main/data/watchlist.txt
+    about: 워치리스트에 티커를 직접 추가/수정하려면 여기를 클릭하세요.
