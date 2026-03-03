@@ -93,6 +93,7 @@ main() {
         echo "환경 변수:"
         echo "  WEEKLY_TOKEN_LIMIT=88000    주간 토큰 한도 (기본: 88000)"
         echo "  USAGE_THRESHOLD=70          실행 제한 임계값 % (기본: 70)"
+        echo "  TIMEOUT_MINUTES=30          Claude 실행 타임아웃 분 (기본: 30)"
         exit 1
     fi
 
@@ -120,8 +121,34 @@ main() {
 
     cd "${SCRIPT_DIR}"
 
-    # Claude Code 실행
-    claude --print \
+    # Claude Code 실행 (타임아웃 적용)
+    local TIMEOUT_MIN="${TIMEOUT_MINUTES:-30}"
+    local TIMEOUT_SEC=$((TIMEOUT_MIN * 60))
+    print_info "타임아웃: ${TIMEOUT_MIN}분"
+
+    # macOS에서는 timeout 대신 perl 기반 래퍼 사용
+    _run_with_timeout() {
+        perl -e '
+            use POSIX ":sys_wait_h";
+            my $timeout = shift @ARGV;
+            my $pid = fork();
+            if ($pid == 0) { exec @ARGV; exit 127; }
+            my $elapsed = 0;
+            while ($elapsed < $timeout) {
+                my $res = waitpid($pid, WNOHANG);
+                if ($res > 0) { exit ($? >> 8); }
+                sleep 1;
+                $elapsed++;
+            }
+            kill "TERM", $pid;
+            sleep 2;
+            kill "KILL", $pid if kill(0, $pid);
+            waitpid($pid, 0);
+            exit 124;
+        ' "$@"
+    }
+
+    _run_with_timeout "${TIMEOUT_SEC}" claude --print \
         --model opus \
         --allowedTools "Task,WebFetch,Read,Write,Bash,Glob,Grep" \
         --verbose \
@@ -144,12 +171,23 @@ CLAUDE.md의 메인 에이전트 오케스트레이션 규칙을 정확히 따�
 6. 최종 투자 의견 및 종합 점수 도출
 7. 보고서를 ${REPORT_FILE}에 마크다운 파일로 저장
 
-보고서는 반드시 CLAUDE.md에 명시된 형식을 따라야 합니다."
+보고서는 반드시 CLAUDE.md에 명시된 형식을 따라야 합니다." \
+        || CLAUDE_EXIT=$?
+
+    CLAUDE_EXIT=${CLAUDE_EXIT:-0}
 
     # ============================================================
     # 결과 확인
     # ============================================================
     echo ""
+
+    # 타임아웃으로 강제 종료된 경우
+    if [[ $CLAUDE_EXIT -eq 124 ]]; then
+        print_error "Claude 분석이 ${TIMEOUT_MIN}분 타임아웃으로 강제 종료되었습니다. (ticker: ${TICKER})"
+        print_info "타임아웃 시간: $(date '+%Y-%m-%d %H:%M:%S')"
+        exit 3
+    fi
+
     if [ -f "${REPORT_FILE}" ]; then
         print_success "분석 완료!"
         print_success "보고서: ${REPORT_FILE}"

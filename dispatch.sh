@@ -47,13 +47,15 @@ fi
 echo "${LOG_PREFIX} 분석 대상: ${NEXT_TICKER}"
 
 # analyze.sh 실행
-"${SCRIPT_DIR}/analyze.sh" "${NEXT_TICKER}"
-EXIT_CODE=$?
+"${SCRIPT_DIR}/analyze.sh" "${NEXT_TICKER}" || EXIT_CODE=$?
+EXIT_CODE=${EXIT_CODE:-0}
 
 if [[ $EXIT_CODE -eq 0 ]]; then
     echo "${LOG_PREFIX} ${NEXT_TICKER} 분석 성공"
 elif [[ $EXIT_CODE -eq 2 ]]; then
     echo "${LOG_PREFIX} ${NEXT_TICKER} 토큰 한도 초과로 중단"
+elif [[ $EXIT_CODE -eq 3 ]]; then
+    echo "${LOG_PREFIX} ${NEXT_TICKER} 타임아웃으로 강제 종료 (${TIMEOUT_MINUTES:-30}분 초과)"
 else
     echo "${LOG_PREFIX} ${NEXT_TICKER} 분석 실패 (exit: ${EXIT_CODE})"
 fi
