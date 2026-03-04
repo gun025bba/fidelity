@@ -1,10 +1,9 @@
 # 분석 대상 티커 목록 (한 줄에 하나, # 주석 가능)
 # 매일 밤 1시~8시 크론잡이 위에서부터 순서대로 하나씩 실행
-JOBY
-RNW
-LOVE
-TALK
-GFL
-RDW
 BLDR
 WAY
+CELH
+DUOL
+POWL
+RXST
+CRDO
