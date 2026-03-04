@@ -178,3 +178,49 @@ peter-lynch-analyst/
 - **launchd 유저 에이전트**: `~/Library/LaunchAgents/com.fidelity.analyze.plist`
 - **스케줄**: 새벽 1~8시 매시 정각, dispatch.sh 실행
 - **로그**: `data/cron.log`
+
+---
+
+## Git 워크트리 기반 개발 플로우
+
+이 프로젝트는 **git worktree**를 활용하여 운영(production)과 개발(development)을 분리한다.
+
+### 워크트리 구조
+```
+~/projects/
+├── fidelity/          # main 브랜치 (운영)
+│                      # - launchd가 이 경로의 dispatch.sh를 실행
+│                      # - 자동 분석이 실제 동작하는 환경
+│                      # - 직접 수정 금지, main 머지를 통해서만 반영
+│
+└── fidelity-dev/      # develop 브랜치 (개발)
+                       # - 모든 개발/수정 작업은 여기서 수행
+                       # - CLAUDE.md, 에이전트, 스크립트 수정
+                       # - 테스트 완료 후 main에 머지
+```
+
+### 개발 워크플로우
+```
+  [fidelity-dev (develop 브랜치)]
+  - 코드 수정, 에이전트 프롬프트 개선, 스크립트 변경
+        ↓
+  [로컬 테스트]
+  - ./analyze.sh TICKER 로 수동 실행하여 결과 확인
+        ↓
+  [develop 브랜치에 커밋]
+  - git add & commit
+        ↓
+  [main 브랜치에 머지]
+  - fidelity-dev에서: git checkout main → git merge develop → git checkout develop
+  - 또는 GitHub PR을 통한 머지
+        ↓
+  [fidelity (main 워크트리)에 자동 반영]
+  - main 브랜치 변경사항이 ~/projects/fidelity/ 에 즉시 반영
+  - 다음 launchd 스케줄 실행 시 변경된 코드로 동작
+```
+
+### 핵심 규칙
+1. **개발은 반드시 `fidelity-dev`(develop)에서** 수행한다
+2. **`fidelity`(main)는 직접 수정하지 않는다** - 머지를 통해서만 반영
+3. **launchd plist는 `~/projects/fidelity/dispatch.sh`를 참조**하므로, main에 머지해야 자동 분석에 반영됨
+4. 두 워크트리는 같은 git 저장소를 공유하므로 브랜치/커밋 히스토리가 동기화됨
