@@ -224,45 +224,63 @@ peter-lynch-analyst/
     └── improvements/            # 개선 사항 기록
 ```
 
-## Git 워크트리 기반 개발 플로우
+## GitHub 이슈 기반 개발 플로우
 
-이 프로젝트는 **git worktree**를 활용하여 운영(production)과 개발(development)을 분리한다.
-
-### 워크트리 구조
-```
-~/projects/
-├── fidelity/          # main 브랜치 (운영)
-│                      # - 분석 실행(dispatch.sh / analyze.sh)의 기준 환경
-│                      # - 직접 수정 금지, main 머지를 통해서만 반영
-│
-└── fidelity-dev/      # develop 브랜치 (개발)
-                       # - 모든 개발/수정 작업은 여기서 수행
-                       # - CLAUDE.md, 에이전트, 스크립트 수정
-                       # - 테스트 완료 후 main에 머지
-```
+이 프로젝트의 모든 개발 작업은 **GitHub 이슈**를 기점으로 시작하여, 이슈 번호 기반의 **브랜치 + git worktree**에서 격리된 채 진행하고, **PR 머지 → 이슈 클로즈**로 마무리한다.
 
 ### 개발 워크플로우
 ```
-  [fidelity-dev (develop 브랜치)]
-  - 코드 수정, 에이전트 프롬프트 개선, 스크립트 변경
+  [1. 이슈 입력]
+  - 사용자가 작업할 GitHub 이슈 번호(또는 이슈)를 제시한다
+  - 이슈 제목/본문에서 작업 범위와 완료 조건(Acceptance Criteria)을 확인한다
         ↓
-  [로컬 테스트]
-  - ./analyze.sh TICKER 로 수동 실행하여 결과 확인
+  [2. 브랜치 & 워크트리 생성]
+  - 이슈 번호를 이용해 브랜치명을 정한다: {issue번호}-{짧은-설명-kebab}
+    예) 이슈 #7 → 7-add-cyclical-screener
+  - 해당 브랜치를 새 worktree로 생성하여 격리된 작업 공간을 만든다:
+      git worktree add ../fidelity-{issue번호} -b {branch} main
+  - 이후 모든 수정은 이 worktree 안에서만 수행한다 (main 워크트리 직접 수정 금지)
         ↓
-  [develop 브랜치에 커밋]
-  - git add & commit
+  [3. TODO 단위 작업 & 커밋]
+  - 작업을 TODO(논리적 최소 단위)로 쪼갠다
+  - 각 TODO를 완료할 때마다 의미 있는 단위로 커밋한다 (한 커밋 = 한 TODO 권장)
+  - 커밋 메시지는 무엇을/왜를 설명하고, 관련 이슈를 참조한다 (예: "refs #7")
         ↓
-  [main 브랜치에 머지]
-  - fidelity-dev에서: git checkout main → git merge develop → git checkout develop
-  - 또는 GitHub PR을 통한 머지
+  [4. Push & PR 생성]
+  - 브랜치를 origin에 푸시한다
+  - PR을 생성한다:
+      - base: main
+      - 본문에 "Closes #{issue번호}"를 넣어 이슈와 연결한다
+      - PR 제목/본문에 변경 요약과 테스트 방법을 기술한다
         ↓
-  [fidelity (main 워크트리)에 반영]
-  - main 브랜치 변경사항이 ~/projects/fidelity/ 에 즉시 반영
-  - 이후 dispatch.sh / analyze.sh 실행 시 변경된 코드로 동작
+  [5. PR 머지 & 이슈 클로즈]
+  - 리뷰/CI 통과 후 PR을 main에 머지한다
+  - "Closes #{issue번호}" 연결로 머지 시 이슈가 자동 클로즈된다 (안 되면 수동 클로즈)
+  - worktree와 브랜치를 정리한다:
+      git worktree remove ../fidelity-{issue번호}
+      git branch -d {branch}  (필요 시 원격 브랜치도 삭제)
+```
+
+### gh CLI 참고 명령
+```bash
+# 이슈 확인
+gh issue view {issue번호}
+
+# 워크트리 + 브랜치 생성
+git worktree add ../fidelity-{issue번호} -b {issue번호}-{설명} main
+
+# 작업 후 푸시 & PR 생성 (이슈 연결)
+git push -u origin {branch}
+gh pr create --base main --title "..." --body "Closes #{issue번호}\n\n..."
+
+# 머지 & 정리 (PR 머지 시 이슈 자동 클로즈)
+gh pr merge --squash --delete-branch
+git worktree remove ../fidelity-{issue번호}
 ```
 
 ### 핵심 규칙
-1. **개발은 반드시 `fidelity-dev`(develop)에서** 수행한다
-2. **`fidelity`(main)는 직접 수정하지 않는다** - 머지를 통해서만 반영
-3. **분석 실행은 `~/projects/fidelity/`(main)의 스크립트를 기준**으로 하므로, main에 머지해야 실행에 반영됨
-4. 두 워크트리는 같은 git 저장소를 공유하므로 브랜치/커밋 히스토리가 동기화됨
+1. **모든 작업은 이슈에서 출발한다** - 이슈 없는 임의 작업 금지
+2. **작업은 이슈 번호 기반 브랜치 + worktree에서 격리 수행**한다 - main 워크트리(`~/investment/fidelity`)는 직접 수정하지 않는다
+3. **커밋은 TODO 단위**로 잘게, 의미 있게 나눈다
+4. **PR은 base: main**으로 생성하고 본문에 `Closes #{이슈번호}`로 이슈를 연결한다
+5. **머지 후 worktree/브랜치를 정리**하고 이슈가 클로즈되었는지 확인한다
