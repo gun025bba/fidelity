@@ -191,6 +191,14 @@ CLAUDE.md의 메인 에이전트 오케스트레이션 규칙을 정확히 따�
     if [ -f "${REPORT_FILE}" ]; then
         print_success "분석 완료!"
         print_success "보고서: ${REPORT_FILE}"
+
+        # 분석 기록 인덱스 갱신 (이슈 #5): reports/ 전수 스캔 없이 기 분석 티커 추적
+        if python3 "${SCRIPT_DIR}/tools/analysis_index.py" update "${TICKER}" "${TIMESTAMP}" >/dev/null 2>&1; then
+            print_success "분석 인덱스 갱신: ${TICKER} → ${TIMESTAMP}"
+        else
+            print_info "분석 인덱스 갱신 실패 (보고서는 정상 생성됨)"
+        fi
+
         print_info "완료 시간: $(date '+%Y-%m-%d %H:%M:%S')"
         echo ""
         echo -e "${GREEN}보고서 미리보기 (상위 30줄):${NC}"

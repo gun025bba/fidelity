@@ -164,6 +164,10 @@
   - 포트폴리오 관점 의견
         ↓
   [최종 보고서 생성: reports/{TICKER}/{TICKER}_{YYYYMMDD}.md]
+        ↓
+  [분석 기록 인덱스 갱신: data/analysis_index.txt]
+  - python3 tools/analysis_index.py update {TICKER}
+  - reports/ 전수 스캔 없이 기 분석 티커/최근 분석일 추적
 ```
 
 ### 서브 에이전트 디스패치 규칙
@@ -190,6 +194,17 @@
 11. **위험 요인** - 린치의 Red Flags + 기타 리스크. 호재와 대칭적 깊이로 서술 (장식용 금지)
 12. **종합 의견** - 피터 린치 관점 + 나의 투자 철학 관점 종합. *Bear Case를 정면 반박할 수 있을 때만 매수 결론. 마지막에 메커니즘 1~6 자기 점검 체크리스트 첨부.*
 
+### 보고서 생성 후 — 분석 기록 인덱스 갱신
+보고서 파일을 저장한 **마지막 단계**에서 분석 기록 인덱스를 갱신한다. 이를 통해 다음 티커 선정 시 `reports/` 디렉토리를 전수 스캔하지 않고도 기 분석 티커와 최근 분석일을 빠르게 확인할 수 있다.
+
+```bash
+python3 tools/analysis_index.py update {TICKER}   # 날짜 생략 시 오늘 날짜로 기록
+```
+
+- 인덱스 파일: `data/analysis_index.txt` (형식: `TICKER: YYYY-MM-DD`, 티커 알파벳순 정렬)
+- `analyze.sh`를 통해 실행한 경우 이 단계는 스크립트가 자동으로 수행한다.
+- 기존 보고서 일괄 반영: `python3 tools/analysis_index.py backfill`
+
 ### 데이터 소스
 - 재무 데이터: 웹 검색 (SEC EDGAR, Yahoo Finance, Macrotrends 등)
 - 뉴스: 웹 검색 (최근 3개월 뉴스 중심)
@@ -215,10 +230,12 @@ peter-lynch-analyst/
 │   └── commands/
 │       └── analyze.md           # /analyze 슬래시 커맨드
 ├── tools/                       # 유틸리티 스크립트
+│   └── analysis_index.py        # 분석 기록 인덱스 관리 (update/backfill/get/list)
 ├── reports/                     # 분석 보고서 출력 (티커별 하위 디렉토리)
 │   └── {TICKER}/               # 티커별 보고서 디렉토리
 ├── data/                        # 캐시/임시 데이터
 │   ├── watchlist.txt            # 분석 대상 티커 목록
+│   ├── analysis_index.txt       # 분석 기록 인덱스 (TICKER: 최근분석일)
 │   └── usage_log.jsonl          # 토큰 사용량 로그
 └── docs/                        # 문서 및 개선 기록
     └── improvements/            # 개선 사항 기록
