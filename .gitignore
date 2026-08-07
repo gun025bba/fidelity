@@ -20,6 +20,10 @@
 data/usage_log.jsonl
 data/cron.log
 
+# Python
+__pycache__/
+*.pyc
+
 # Misc
 *.log
 *.tmp

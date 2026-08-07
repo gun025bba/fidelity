@@ -217,6 +217,7 @@ python3 tools/analysis_index.py update {TICKER}   # 날짜 생략 시 오늘 날
 ```
 peter-lynch-analyst/
 ├── CLAUDE.md                    # 이 파일 (메인 에이전트 설정)
+├── requirements.txt              # Python 의존성 (yfinance — 종목 선정 스크리너용)
 ├── dispatch.sh                  # 디스패처: watchlist에서 다음 티커 선택 후 analyze.sh 호출
 ├── analyze.sh                   # 분석 실행: 토큰 체크 후 claude 메인 에이전트 실행
 ├── .claude/
@@ -227,10 +228,14 @@ peter-lynch-analyst/
 │   │   ├── industry-analyst.md
 │   │   ├── sentiment-analyst.md
 │   │   └── valuation-analyst.md
-│   └── commands/
-│       └── analyze.md           # /analyze 슬래시 커맨드
+│   ├── commands/
+│   │   └── analyze.md           # /analyze 슬래시 커맨드
+│   └── skills/
+│       └── stock-selection/     # 종목 선정 스킬 (스크리닝 → 후보 확인 → /analyze 체이닝)
+│           └── SKILL.md
 ├── tools/                       # 유틸리티 스크립트
-│   └── analysis_index.py        # 분석 기록 인덱스 관리 (update/backfill/get/list)
+│   ├── analysis_index.py        # 분석 기록 인덱스 관리 (update/backfill/get/list)
+│   └── screen_candidates.py     # 시가총액/섹터 기반 후보 티커 스크리너 (yfinance)
 ├── reports/                     # 분석 보고서 출력 (티커별 하위 디렉토리)
 │   └── {TICKER}/               # 티커별 보고서 디렉토리
 ├── data/                        # 캐시/임시 데이터
