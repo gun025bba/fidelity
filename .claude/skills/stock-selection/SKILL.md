@@ -1,6 +1,6 @@
 ---
 description: "시가총액/섹터 조건으로 새 분석 후보 티커를 스크리닝하고, 최근 몇 개월 내 이미 분석한 티커는 제외한 뒤, 사용자가 고른 티커를 그 자리에서 /analyze로 이어서 분석합니다. 사용자가 '종목 선정', '분석할 티커 찾아줘/스크리닝해줘', '새 후보 찾아줘' 등을 요청할 때 사용하세요."
-allowed-tools: Bash, Read, Write, Skill
+allowed-tools: Bash, Read, Write, Skill, WebSearch
 ---
 
 # 종목 선정 (Stock Selection)
@@ -37,7 +37,16 @@ python3 tools/screen_candidates.py \
   --limit 20
 ```
 
-이 스크립트는 `data/analysis_index.txt`(최근 분석 기록)와 `data/watchlist.txt`(이미 대기 중인 티커)를 자동으로 확인하여 이미 제외한 결과만 출력합니다. 스크립트는 어떤 파일도 수정하지 않습니다(읽기 전용). 스크리너 조회가 실패하면(네트워크 오류, yfinance 미설치 등) 에러 메시지를 그대로 사용자에게 전달하세요.
+이 스크립트는 `data/analysis_index.txt`(최근 분석 기록)와 `data/watchlist.txt`(이미 대기 중인 티커)를 자동으로 확인하여 이미 제외한 결과만 출력합니다. 스크립트는 어떤 파일도 수정하지 않습니다(읽기 전용).
+
+**네트워크 폴백 (Claude Code Remote/클라우드 세션)**: 위 명령이 egress 정책으로 인한 네트워크 오류로 실패하면(예: "스크리너 조회에 실패했습니다", `EGRESS_BLOCKED` 등) — 이 환경은 `yfinance`뿐 아니라 `WebFetch`도 임의 외부 도메인 접근이 막혀 있으므로 **WebFetch로 재시도하지 말고** 곧바로 아래 절차로 전환하세요:
+
+1. `WebSearch`로 Step 1의 섹터/시총 조건에 맞는 후보 종목을 조사합니다 (예: `"{섹터} 소형주 시가총액 3억~100억 달러 종목 리스트 2026"`, 섹터별로 나눠 여러 쿼리 실행 가능). 검색 결과에서 후보 티커·회사명과 (파악 가능하면) 대략적인 시가총액/섹터를 메모하세요.
+2. 수집한 티커를 로컬 제외 필터에 통과시킵니다 (yfinance 없이 동작):
+   ```bash
+   python3 tools/screen_candidates.py --tickers "TICKER1,TICKER2,TICKER3" --exclude-recent-months 3
+   ```
+3. Step 4에서 이 결과를 사용자에게 제시할 때, **WebSearch 스니펫 기반 추정치이며 yfinance 라이브 조회보다 시총/섹터 정확도가 낮을 수 있음**을 함께 안내하세요.
 
 ## Step 4: 후보 제시
 

@@ -7,6 +7,11 @@ yfinance의 EquityQuery/screen()으로 조건에 맞는 티커를 조회한 뒤,
 - data/watchlist.txt 에 이미 대기 중인 티커
 를 제외한 후보 목록을 stdout에 출력한다. 파일은 읽기만 하며 아무것도 쓰지 않는다.
 
+Claude Code Remote(클라우드) 세션 등 egress 정책상 외부 도메인 접근이 막혀
+yfinance 조회 자체가 불가능한 환경에서는 --tickers 로 후보 티커를 직접 넘기면
+네트워크 호출 없이 동일한 로컬 제외 필터(최근 분석/watchlist 중복)만 적용해
+결과를 낼 수 있다 (예: WebSearch로 후보를 수집한 뒤 이 옵션으로 걸러내기).
+
 사용법:
     python3 tools/screen_candidates.py [옵션]
 
@@ -18,8 +23,10 @@ yfinance의 EquityQuery/screen()으로 조건에 맞는 티커를 조회한 뒤,
     --exclude-recent-months   이 개월 수 이내 분석된 티커 제외 (기본값: 3, 0이면 제외 안 함)
     --limit                   최대 결과 개수 (기본값: 20)
     --region                  yfinance region 코드 (기본값: us, NYSE/NASDAQ 근사)
+    --tickers                 콤마 구분 티커 목록. 주어지면 yfinance 조회를 건너뛰고
+                              로컬 제외 필터만 적용한다 (네트워크 불필요).
 
-의존성: yfinance (pip install -r requirements.txt)
+의존성: yfinance (pip install -r requirements.txt) — --tickers 사용 시에는 불필요.
 """
 
 import argparse
@@ -48,6 +55,11 @@ def parse_args(argv):
     parser.add_argument("--exclude-recent-months", type=int, default=DEFAULT_EXCLUDE_RECENT_MONTHS)
     parser.add_argument("--limit", type=int, default=DEFAULT_LIMIT)
     parser.add_argument("--region", default="us")
+    parser.add_argument(
+        "--tickers",
+        default=None,
+        help="콤마 구분 티커 목록. 주어지면 yfinance 조회를 건너뛰고 로컬 제외 필터만 적용한다.",
+    )
     return parser.parse_args(argv)
 
 
@@ -110,15 +122,38 @@ def run_screen(yf, query, limit):
     return response.get("quotes", [])
 
 
+def filter_raw_tickers(raw_tickers: str, exclude_recent: set, exclude_watchlist: set, limit: int) -> list:
+    """--tickers 로 받은 콤마 구분 티커 문자열에 로컬 제외 필터만 적용해 남는 티커 목록을 반환."""
+    seen = set()
+    results = []
+    for raw in raw_tickers.split(","):
+        ticker = raw.strip().upper()
+        if not ticker or ticker in seen or ticker in exclude_recent or ticker in exclude_watchlist:
+            continue
+        seen.add(ticker)
+        results.append(ticker)
+        if len(results) >= limit:
+            break
+    return results
+
+
 def main() -> int:
     args = parse_args(sys.argv[1:])
-    sectors = [s.strip() for s in args.sectors.split(",") if s.strip()]
-
-    yf, query = build_query(sectors, args.market_cap_min, args.market_cap_max, args.region)
-    quotes = run_screen(yf, query, args.limit)
-
     exclude_recent = recently_analyzed_tickers(args.exclude_recent_months)
     exclude_watchlist = load_watchlist_tickers()
+
+    if args.tickers:
+        results = filter_raw_tickers(args.tickers, exclude_recent, exclude_watchlist, args.limit)
+        if not results:
+            print("조건에 맞는 신규 후보 티커가 없습니다 (제외 조건을 완화해 보세요).")
+            return 0
+        for ticker in results:
+            print(ticker)
+        return 0
+
+    sectors = [s.strip() for s in args.sectors.split(",") if s.strip()]
+    yf, query = build_query(sectors, args.market_cap_min, args.market_cap_max, args.region)
+    quotes = run_screen(yf, query, args.limit)
 
     results = []
     for q in quotes:
