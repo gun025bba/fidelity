@@ -4,6 +4,7 @@ description: "경쟁사 및 산업 전문 분석가. 해당 기업이 속한 산
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep

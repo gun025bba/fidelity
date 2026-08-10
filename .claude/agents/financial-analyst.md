@@ -4,6 +4,7 @@ description: "재무제표 전문 분석가. 티커 심볼을 받아 SEC EDGAR, 
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep

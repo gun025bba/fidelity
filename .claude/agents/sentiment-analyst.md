@@ -4,6 +4,7 @@ description: "뉴스 및 시장 센티먼트 전문 분석가. 최근 3개월 �
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep

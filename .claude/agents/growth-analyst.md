@@ -4,6 +4,7 @@ description: "미래 비전 및 성장성 전문 분석가. 기업의 TAM, 성�
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep

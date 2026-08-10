@@ -4,6 +4,7 @@ description: "사업 모델 및 비즈니스 전문 분석가. 기업의 수익 
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep
