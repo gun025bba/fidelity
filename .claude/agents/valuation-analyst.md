@@ -4,6 +4,7 @@ description: "밸류에이션 전문 분석가. PER, PEG, DCF, EV/EBITDA 등 다
 model: sonnet
 tools:
   - WebFetch
+  - WebSearch
   - Read
   - Write
   - Grep
