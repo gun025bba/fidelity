@@ -1,6 +1,6 @@
 ---
 description: "주어진 티커 심볼의 종합 투자 분석을 실행합니다. 6개 서브 에이전트를 병렬로 실행하여 피터 린치 관점의 투자 보고서를 생성합니다."
-allowed-tools: Task, WebFetch, Read, Write, Bash, Glob, Grep
+allowed-tools: Task, WebSearch, WebFetch, Read, Write, Bash, Glob, Grep
 ---
 
 # 피터 린치 투자 분석 실행
@@ -14,9 +14,11 @@ CLAUDE.md의 "메인 에이전트 오케스트레이션 규칙"과 "⚖️ 반�
 > ⚠️ **전 과정 원칙 (Conclusion-Last)**: 결론을 먼저 정하고 근거를 모으지 않는다. 근거를 모은 뒤 결론을 도출한다. Bear Case를 Bull Case보다 먼저 완성한다.
 
 ### Step 1: 기본 정보 확인
-먼저 웹 검색으로 {TICKER}의 기본 정보를 빠르게 확인하세요:
+먼저 WebSearch로 {TICKER}의 기본 정보를 빠르게 확인하세요:
 - 회사명, 섹터, 현재 주가, 시가총액
 - 이 정보를 모든 서브 에이전트에게 전달합니다.
+
+> 🌐 **네트워크 폴백 (Claude Code Remote/클라우드/모바일 세션)**: 이 환경에서는 egress 정책으로 `WebFetch`의 임의 외부 도메인 접근이 차단될 수 있습니다. `WebFetch`가 실패하면 **재시도하지 말고** `WebSearch`로 전환하세요. 6개 서브 에이전트도 동일한 폴백 규칙을 따르도록 이미 각 에이전트 정의에 명시되어 있습니다.
 
 ### Step 1.5: 가설 사전등록 (Pre-registration) — 근거 수집 전
 서브 에이전트를 실행하기 **전에**, 현재까지의 기본 정보만으로:

@@ -150,7 +150,7 @@ main() {
 
     _run_with_timeout "${TIMEOUT_SEC}" claude --print \
         --model opus \
-        --allowedTools "Task,WebFetch,Read,Write,Bash,Glob,Grep" \
+        --allowedTools "Task,WebSearch,WebFetch,Read,Write,Bash,Glob,Grep" \
         --verbose \
         "다음 티커를 분석해주세요: ${TICKER}
 
