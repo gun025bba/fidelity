@@ -210,6 +210,8 @@ python3 tools/analysis_index.py update {TICKER}   # 날짜 생략 시 오늘 날
 - 산업 데이터: 웹 검색 (업종 리포트, 시장 조사)
 - 실시간 시세: 웹 검색
 
+**도구 우선순위 및 모바일/원격 세션 폴백**: 모든 서브 에이전트는 `WebSearch`를 1순위 도구로 사용하고, `WebFetch`는 특정 페이지의 상세 데이터가 꼭 필요할 때만 보조적으로 사용한다. **Claude Code Remote/클라우드/모바일 세션은 egress 정책으로 `WebFetch`의 임의 외부 도메인 접근이 차단되는 경우가 있다** — 이 경우 `WebFetch`를 재시도하지 말고 `WebSearch` 결과만으로 분석을 진행한다 (`.claude/skills/stock-selection/SKILL.md`에 이미 적용된 동일한 폴백 규칙).
+
 ---
 
 ## 프로젝트 구조
